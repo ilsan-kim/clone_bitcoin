@@ -1,0 +1,17 @@
+{{define "add"}}
+    <!DOCTYPE html>
+    <html lang="en">
+    {{template "head" "ADD"}}
+    <body>
+    {{template "header" "Add new block to 동더리움"}}
+    <!--템플릿으로 for loop 돌리기-->
+    <main>
+        <form method="POST" action="/add">
+            <input type="text" placeholder="Data for your block" required name="blockData"/>
+            <button>Add Block</button>
+        </form>
+    </main>
+    </body>
+    {{template "footer"}}
+    </html>
+{{end}}

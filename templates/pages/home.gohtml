@@ -1,0 +1,17 @@
+{{define "home"}}
+<!DOCTYPE html>
+<html lang="en">
+    {{template "head" .PageTitle}}
+    <body>
+        {{template "header" .PageTitle}}
+            <!--템플릿으로 for loop 돌리기-->
+            <main>
+            <!--.Block를 변수로 가진 템플릿의 range 함수가 실행되면, 그 안의 template에 .으로 전달하는 변수는 range의 변수인 ".Blocks"의 하나하나가 된다.-->
+            {{range .Blocks}}
+                {{template "block" .}}
+            {{end}}
+            </main>
+        {{template "footer"}}
+    </body>
+</html>
+{{end}}
