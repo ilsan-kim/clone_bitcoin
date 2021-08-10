@@ -106,7 +106,6 @@ func blocks(writer http.ResponseWriter, request *http.Request) {
 
 }
 
-
 // 다른 함수 시작 전 먼저 시작되도록 함 -> 여기서 정의한 담에 func Start 안에서 사용해준다.
 func jsonContentTypeMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
