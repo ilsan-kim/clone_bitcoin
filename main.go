@@ -1,7 +1,7 @@
 package main
 
-import "github.com/ddhyun93/seancoin/cli"
+import "github.com/ddhyun93/seancoin/blockchain"
 
 func main() {
-	cli.Start()
+	blockchain.BlockChain()
 }
