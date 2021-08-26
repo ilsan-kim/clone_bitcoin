@@ -1,6 +1,9 @@
 package blockchain
 
 import (
+	"fmt"
+	"github.com/ddhyun93/seancoin/db"
+	"github.com/ddhyun93/seancoin/utils"
 	"sync"
 )
 
@@ -25,10 +28,38 @@ type blockChain struct {
 var b *blockChain
 var once sync.Once
 
+// 바이트로 인코딩된 블록체인의 데이터를 디코딩
+func (b *blockChain) restore(data []byte) {
+	utils.FromBytes(b, data)
+}
+
+func (b *blockChain) persist() {
+	db.SaveBlockChain(utils.ToBytes(b))
+}
+
 func (b *blockChain) AddBlock(data string) {
-	block := createBlock(data, b.NewestHash, b.Height)	// 블록을 만들고
+	block := createBlock(data, b.NewestHash, b.Height + 1)	// 블록을 만들고
 	b.NewestHash = block.Hash							// 체인을 업데이트
 	b.Height = block.Height
+	b.persist()
+}
+
+func (b *blockChain) Blocks() []*Block {
+	// Search ALL blocks using NewestHash (=checkpoint)
+	var blocks []*Block
+	hashCursor := b.NewestHash
+
+	// Loop until block.PrevHash == ""
+	for {
+		block, _ := FindBlock(hashCursor)
+		blocks = append(blocks, block)
+		if block.PrevHash != "" {
+			hashCursor = block.PrevHash
+		} else {
+			break
+		}
+	}
+	return blocks
 }
 
 func BlockChain() *blockChain {
@@ -40,10 +71,19 @@ func BlockChain() *blockChain {
 		once.Do(func() {
 			// 첫번째 블록
 			b = &blockChain{"", 0}
-			b.AddBlock("Genesis Block")
+			// checkpoint 가 있는지 확인 (있다면 이미 db에 블록체인이 있는 것)
+			checkpoint := db.Checkpoint()	// 블록체인이 있다면 []byte 를, 없다면 nil 을 리턴할겨
+			if checkpoint == nil {
+				b.AddBlock("Genesis Block")
+			} else {
+				// checkpoint 가 있다면 db 에서 블록체인을 복원해줘야 함
+				fmt.Println("Restoring")
+				b.restore(checkpoint)
+			}
 		})
 		//b = &blockChain{}
 		//b.blocks = append(b.blocks, createBlock("Genesis Block")) // 이 기능이 통틀어 한번만 호출되도록 함
 	}
+	fmt.Println(b.NewestHash)
 	return b
 }

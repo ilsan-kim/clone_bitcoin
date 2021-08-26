@@ -8,7 +8,6 @@ import (
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
-	"strconv"
 )
 
 var port string
@@ -39,7 +38,7 @@ func Start(aPort int) {
 	router.Use(jsonContentTypeMiddleware)	// router 가 호출될 때 이 함수가 실행 된 후 nextHandler가 실행됨
 	router.HandleFunc("/", documentation).Methods("GET")	// gorilla mux의 특징으로 어떤 라우터가 어떤 메서드를 처리할지 특정할 수 있음 >> Method not allowed 처리를 안해도됨
 	router.HandleFunc("/blocks", blocks).Methods("GET", "POST")
-	router.HandleFunc("/blocks/{height:[0-9]+}", block).Methods("GET")
+	router.HandleFunc("/blocks/{hash:[a-f0-9]+}", block).Methods("GET")
 	fmt.Printf("Listening on http://localhost%s\n", port)
 	log.Fatal(http.ListenAndServe(port, router))
 }
@@ -64,7 +63,7 @@ func documentation(writer http.ResponseWriter, request *http.Request) {
 			Description:	"See All Block",
 		},
 		{
-			URL:			url("/blocks/{height}"),
+			URL:			url("/blocks/{hash}"),
 			Method: 		"GET",
 			Description:	"See A Block",
 		},
@@ -81,9 +80,8 @@ func documentation(writer http.ResponseWriter, request *http.Request) {
 
 func block(writer http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)	// 리퀘스트에 담긴 변수 (패스 파라미터)를 vars 라는 인자로 던져주고
-	height, err := strconv.Atoi(vars["height"]) // 리퀘스트에 담긴 변수 (패스 파라미터)를 담은 vars에서 우리가 필요한 "height"라는 값을 꺼내옴 // str > int 형변환
-	utils.HandleErr(err)
-	block, err := blockchain.GetBlockChain().GetBlock(height)
+	hash := vars["hash"] // 리퀘스트에 담긴 변수 (패스 파라미터)를 담은 vars에서 우리가 필요한 "height"라는 값을 꺼내옴 // str > int 형변환
+	block, err := blockchain.FindBlock(hash)
 	encoder := json.NewEncoder(writer)
 	if err == blockchain.ErrNotFound {
 		encoder.Encode(errorResponse{fmt.Sprint(err)})			// 에러를 string으로 바꿈
@@ -95,12 +93,12 @@ func block(writer http.ResponseWriter, request *http.Request) {
 func blocks(writer http.ResponseWriter, request *http.Request) {
 	switch request.Method {
 	case "GET":
-		utils.HandleErr(json.NewEncoder(writer).Encode(blockchain.GetBlockChain().AllBlocks()))
+		utils.HandleErr(json.NewEncoder(writer).Encode(blockchain.BlockChain().Blocks()))
 	case "POST":
 		var addBlockBody addBlockBody
 		utils.HandleErr(json.NewDecoder(request.Body).Decode(&addBlockBody)) // 바로 위 라인에서 선언한 addBlockBody의 주소값에다가 디코딩을 해야함
 		fmt.Printf("Request Body : %s", addBlockBody)
-		blockchain.GetBlockChain().AddBlock(addBlockBody.Message)
+		blockchain.BlockChain().AddBlock(addBlockBody.Message)
 		writer.WriteHeader(http.StatusCreated)
 	}
 

@@ -1,15 +1,15 @@
 package db
 
 import (
-	"fmt"
 	"github.com/boltdb/bolt"
 	"github.com/ddhyun93/seancoin/utils"
 )
 
 const (
 	dbName = "blockchain.db"
-	daataBucket = "data"
+	dataBucket = "data"
 	blocksBucket = "blocks"
+	checkpoint = "checkpoint"
 )
 var db *bolt.DB
 
@@ -32,7 +32,7 @@ func DB() *bolt.DB {
 		utils.HandleErr(err)
 		err = db.Update(func(tx *bolt.Tx) error {
 			// 버킷이 없으면 생성
-			_, err := tx.CreateBucketIfNotExists([]byte(daataBucket))
+			_, err := tx.CreateBucketIfNotExists([]byte(dataBucket))
 			utils.HandleErr(err)
 			_, err = tx.CreateBucketIfNotExists([]byte(blocksBucket))
 			utils.HandleErr(err)
@@ -43,8 +43,11 @@ func DB() *bolt.DB {
 	return db
 }
 
+func Close() {
+	DB().Close()
+}
+
 func SaveBlock(hash string, data []byte) { 		// key: 블록의 Hash value: 블록의 바이트 값
-	fmt.Printf("Saving Block %s\nData: %b", hash, data)
 	err := DB().Update(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte(blocksBucket))	// 버켓 인스턴스 불러오고
 		err := bucket.Put([]byte(hash), data)
@@ -55,9 +58,31 @@ func SaveBlock(hash string, data []byte) { 		// key: 블록의 Hash value: 블�
 
 func SaveBlockChain(data []byte) {
 	err := DB().Update(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(blocksBucket))
-		err := bucket.Put([]byte("checkpoint"), data)
+		bucket := tx.Bucket([]byte(dataBucket))
+		err := bucket.Put([]byte(checkpoint), data)
 		return err
 	})
 	utils.HandleErr(err)
+}
+
+func Checkpoint() []byte {
+	// 블록체인읨 체크포인트를 바이트로 리턴함
+	var data []byte
+	DB().View(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte(dataBucket))
+		data = bucket.Get([]byte(checkpoint))
+		return nil
+	})
+	return data
+}
+
+func Block(hash string) []byte {
+	// 해쉬값에 맞는 Block 데이터를 전달함
+	var data []byte
+	DB().View(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte(blocksBucket))
+		data = bucket.Get([]byte(hash))
+		return nil
+	})
+	return data
 }

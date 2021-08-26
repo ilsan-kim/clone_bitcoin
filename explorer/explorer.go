@@ -33,7 +33,7 @@ func Start(port int) {
 
 // 데이터를 쓰는 writer는 포인터가 필요없고, 리턴해주는 request는 파일이 될수도있으니 포인터를 사용해야한다.
 func home(writer http.ResponseWriter,  request *http.Request) {
-	data := homeData{"동더리움", blockchain.GetBlockChain().AllBlocks()}
+	data := homeData{"동더리움", nil}
 	templates.ExecuteTemplate(writer, "home", data)
 }
 
@@ -44,7 +44,7 @@ func add(writer http.ResponseWriter, request *http.Request) {
 	case "POST":	// POST일떄는 유저가 입력한 데이터 (폼데이터 중 name="blockData"인것)를 가져와서 새로운 블록을 생성해야함
 		request.ParseForm()
 		data := request.Form.Get("blockData")
-		blockchain.GetBlockChain().AddBlock(data)
+		blockchain.BlockChain().AddBlock(data)
 		http.Redirect(writer, request, "/home", http.StatusPermanentRedirect)
 	}
 }

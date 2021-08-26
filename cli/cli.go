@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/ddhyun93/seancoin/explorer"
 	"github.com/ddhyun93/seancoin/rest"
-	"os"
+	"runtime"
 )
 
 func usage() {
@@ -13,7 +13,7 @@ func usage() {
 	fmt.Printf("Please use the following flags:\n")
 	fmt.Printf("-port=4000: Set port of the server\n")
 	fmt.Printf("-mode=html: Choose between 'html' and 'rest * if you select 'multi'mode, you dont need to add '-port' flag '\n\n")
-	os.Exit(0)
+	runtime.Goexit()	// defer 보다 늦게 실행됨
 }
 
 func Start() {
